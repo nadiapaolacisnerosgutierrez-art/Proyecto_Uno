@@ -1,0 +1,52 @@
+<resources>
+    <string name="app_name">Garabato</string>
+
+    <!-- Login & Register -->
+    <string name="login_title">Bienvenido a Garabato</string>
+    <string name="login_subtitle">Comparte y descubre arte con amigos</string>
+    <string name="hint_email">Correo electrónico</string>
+    <string name="hint_password">Contraseña</string>
+    <string name="hint_name">Nombre de usuario</string>
+    <string name="btn_login">Iniciar Sesión</string>
+    <string name="btn_register">Registrarse</string>
+    <string name="btn_guest">Ingresar como invitado</string>
+    <string name="toggle_to_register">¿No tienes cuenta? Regístrate</string>
+    <string name="toggle_to_login">¿Ya tienes cuenta? Inicia sesión</string>
+
+    <!-- Pantalla 1: Inicio -->
+    <string name="title_garabato">Garabato</string>
+    <string name="cd_search">Buscar</string>
+    <string name="cd_notifications">Notificaciones</string>
+    <string name="chip_for_you">Para ti</string>
+    <string name="chip_friends">Amigos</string>
+    <string name="chip_challenges">Retos</string>
+    <string name="chip_trends">Tendencias</string>
+    <string name="post_author">Ana G.</string>
+    <string name="post_likes">124</string>
+    <string name="post_comments">18</string>
+    <string name="btn_redraw">Redibujar</string>
+    <string name="cd_like">Me gusta</string>
+    <string name="cd_comment">Comentar</string>
+    <string name="cd_share">Compartir</string>
+    <string name="nav_home">Inicio</string>
+    <string name="nav_challenges">Retos</string>
+    <string name="nav_add">Crear dibujo</string>
+    <string name="nav_friends">Amigos</string>
+    <string name="nav_profile">Perfil</string>
+    <string name="cd_story_avatar">Historia de usuario</string>
+
+    <!-- Pantalla 2: Lienzo -->
+    <string name="title_canvas_untitled">Lienzo sin título</string>
+    <string name="cd_close">Cerrar</string>
+    <string name="cd_undo">Deshacer</string>
+    <string name="cd_redo">Rehacer</string>
+    <string name="btn_publish">Publicar</string>
+    <string name="cd_tool_pencil">Lápiz</string>
+    <string name="cd_tool_brush">Pincel</string>
+    <string name="cd_tool_eraser">Borrador</string>
+    <string name="cd_tool_bucket">Cubeta</string>
+    <string name="cd_tool_shapes">Formas</string>
+    <string name="cd_color_select">Seleccionar color</string>
+    <string name="cd_thickness_slider">Grosor del trazo</string>
+    <string name="cd_canvas_drawing">Lienzo de dibujo</string>
+</resources>
