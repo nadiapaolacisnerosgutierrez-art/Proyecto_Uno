@@ -1,6 +1,5 @@
-# Task List - Database & Clean Architecture Integration
+# Task List - Essential Flows & Privacy Policy
 
-- `[x]` Implement query methods in `GarabatoDbHelper`
-- `[x]` Connect `GarabatoRepositoryImpl` to `GarabatoDbHelper`
-- `[x]` Update `GarabatoViewModel` to expose domain models
+- `[x]` Update `LienzoActivity.kt` to save drawing with active user ID from SharedPreferences / DB and redirect to `PerfilActivity`
+- `[x]` Update `PerfilActivity.kt` with `onResume()` to reload drawings and user profile from DB/SharedPreferences
 - `[x]` Verify build with gradle build

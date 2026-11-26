@@ -1,13 +1,8 @@
-# Walkthrough - Database & Clean Architecture Integration
+# Walkthrough - Essential Flows & Privacy Policy
 
-Successfully connected the SQLite database (`GarabatoDbHelper`) to the Clean Architecture repository (`GarabatoRepositoryImpl`) and ViewModel (`GarabatoViewModel`), ensuring data flows from the local database to the app layers.
-
-## Changes
-
-### [Data & Clean Architecture Layer]
-- **[GarabatoDbHelper.kt](file:///C:/Users/nadia/AndroidStudioProjects/Practica1/app/src/main/java/com/jdl/practica1/data/GarabatoDbHelper.kt)**: Added `obtenerDibujos()` and `obtenerUsuarios()` query methods to retrieve records from SQLite tables (`usuario`, `dibujo`).
-- **[GarabatoRepositoryImpl.kt](file:///C:/Users/nadia/AndroidStudioProjects/Practica1/app/src/main/java/com/jdl/practica1/data/repository/GarabatoRepositoryImpl.kt)**: Connected domain repository to `GarabatoDbHelper`.
-- **[GarabatoViewModel.kt](file:///C:/Users/nadia/AndroidStudioProjects/Practica1/app/src/main/java/com/jdl/practica1/presentation/viewmodel/GarabatoViewModel.kt)**: Exposed `dibujos` and `usuarios` state flows to the UI.
+Successfully connected drawing publication with user session management and profile refresh:
+1. **LienzoActivity**: Retrieves the active `idUsuario` from `SharedPreferences` (with robust fallback to database query/creation), associates the new drawing precisely with that user ID when publishing, and redirects to `PerfilActivity`.
+2. **PerfilActivity**: Implemented `onResume()` and `onCreate()` to reload the active user's profile info and fetch their published drawings from `GarabatoDbHelper`, ensuring newly published drawings appear immediately in the "Dibujos" tab with updated counters.
 
 ## Verification Results
 
