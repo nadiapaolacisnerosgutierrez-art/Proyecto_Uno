@@ -1,29 +1,29 @@
-# Implementation Plan - Real User Session, Profile DB Integration, & Amigos Interactivity
+# Implementation Plan - Persistent Friend Requests & Permanent Profile Picture
 
-1. **Clean Test Data & Real User (`LoginActivity.kt` + `GarabatoDbHelper`)**:
-   - Remove automatic dummy user insertion (`Ana García`, `Carlos Ruiz`, `Sofía López`) from `GarabatoDbHelper.onCreate`.
-   - In `LoginActivity`, when registering or logging in, save the user into the `usuario` table of `garabato.db` and store their ID, name, and email in `SharedPreferences` (`garabato_user_prefs`).
-   - Add a Privacy Policy button in `LoginActivity` opening a scrollable `AlertDialog`.
-2. **Real User Profile (`PerfilActivity.kt`)**:
-   - Read active user name, email, and drawing count from `SharedPreferences` and `GarabatoDbHelper`.
-   - Display real drawings created by the active user in the "Dibujos" tab.
-   - Add scrollable Privacy Policy dialog.
-3. **Amigos Interactivity (`AmigosActivity.kt`)**:
-   - Make friend request accept/reject and friend action buttons fully interactive (updating UI state dynamically).
+Implement persistent friend requests in SQLite and permanent profile picture storage in `filesDir` and SQLite (`garabato.db`).
 
 ## User Review Required
 
 > [!IMPORTANT]
-> - `GarabatoDbHelper.onCreate` will no longer insert hardcoded sample users automatically; users are created dynamically through `LoginActivity`.
-> - Active user session is persisted via `SharedPreferences`.
+> - **Friend Requests (`amistad` table)**: Will create an `amistad` table (`idEmisor`, `idReceptor`, `estado` = `'pendiente'` or `'aceptada'`). Sending a request sets `'pendiente'`. Accepting sets `'aceptada'` making users mutual friends.
+> - **Permanent Profile Picture**: Selected avatar image will be copied to `context.filesDir/avatar_usuario_${idUsuario}.jpg`, and its absolute path saved permanently in the `avatarUrl` column of the `usuario` table in `garabato.db`.
 
 ## Proposed Changes
 
-### [Files to Modify]
-1. **[GarabatoDbHelper.kt](file:///C:/Users/nadia/AndroidStudioProjects/Practica1/app/src/main/java/com/jdl/practica1/data/GarabatoDbHelper.kt)**: Remove hardcoded sample test user insertion from `onCreate`.
-2. **[LoginActivity.kt](file:///C:/Users/nadia/AndroidStudioProjects/Practica1/app/src/main/java/com/jdl/practica1/LoginActivity.kt)**: Implement saving real user to database + SharedPreferences session, plus Privacy Policy button.
-3. **[PerfilActivity.kt](file:///C:/Users/nadia/AndroidStudioProjects/Practica1/app/src/main/java/com/jdl/practica1/PerfilActivity.kt)**: Load real active user profile from SharedPreferences and real drawings from database.
-4. **[AmigosActivity.kt](file:///C:/Users/nadia/AndroidStudioProjects/Practica1/app/src/main/java/com/jdl/practica1/AmigosActivity.kt)**: Make friend requests interactive.
+### [Database Layer]
+#### [MODIFY] [GarabatoDbHelper.kt](file:///C:/Users/nadia/AndroidStudioProjects/Practica1/app/src/main/java/com/jdl/practica1/data/GarabatoDbHelper.kt)
+- Add `amistad` table creation in `onCreate` (`idEmisor`, `idReceptor`, `estado`).
+- Add helper methods for sending, accepting, rejecting friend requests and fetching friends.
+
+### [UI / Activity Layer]
+#### [MODIFY] [AmigosActivity.kt](file:///C:/Users/nadia/AndroidStudioProjects/Practica1/app/src/main/java/com/jdl/practica1/AmigosActivity.kt)
+- Show real incoming friend requests with "Aceptar" and "Rechazar" buttons.
+- Show "Enviar solicitud" when searching users, updating to "Solicitud enviada".
+- Show mutual accepted friends in "Tus amigos".
+
+#### [MODIFY] [PerfilActivity.kt](file:///C:/Users/nadia/AndroidStudioProjects/Practica1/app/src/main/java/com/jdl/practica1/PerfilActivity.kt)
+- Load permanent avatar image from SQLite `avatarUrl`.
+- Save picked gallery image locally to `filesDir` and persist path in `garabato.db`.
 
 ## Verification Plan
 

@@ -20,6 +20,14 @@ fun navigateToActivity(context: Context, clazz: Class<*>) {
 
 @Composable
 fun GarabatoBottomBar(context: Context, currentTab: Int) {
+    val navItemColors = NavigationBarItemDefaults.colors(
+        selectedIconColor = MaterialTheme.colorScheme.primary,
+        selectedTextColor = MaterialTheme.colorScheme.primary,
+        indicatorColor = MaterialTheme.colorScheme.secondaryContainer,
+        unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
+        unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant
+    )
+
     NavigationBar(
         containerColor = MaterialTheme.colorScheme.surface
     ) {
@@ -27,13 +35,15 @@ fun GarabatoBottomBar(context: Context, currentTab: Int) {
             icon = { Icon(Icons.Default.Home, contentDescription = null) },
             label = { Text(stringResource(R.string.nav_home)) },
             selected = currentTab == 0,
-            onClick = { navigateToActivity(context, InicioActivity::class.java) }
+            onClick = { navigateToActivity(context, InicioActivity::class.java) },
+            colors = navItemColors
         )
         NavigationBarItem(
             icon = { Icon(Icons.Default.Star, contentDescription = null) },
             label = { Text(stringResource(R.string.nav_challenges)) },
             selected = currentTab == 1,
-            onClick = { navigateToActivity(context, RetosActivity::class.java) }
+            onClick = { navigateToActivity(context, RetosActivity::class.java) },
+            colors = navItemColors
         )
         NavigationBarItem(
             icon = {
@@ -51,19 +61,22 @@ fun GarabatoBottomBar(context: Context, currentTab: Int) {
             },
             label = {},
             selected = false,
-            onClick = { navigateToActivity(context, LienzoActivity::class.java) }
+            onClick = { navigateToActivity(context, LienzoActivity::class.java) },
+            colors = navItemColors
         )
         NavigationBarItem(
             icon = { Icon(Icons.Default.AccountBox, contentDescription = null) },
             label = { Text(stringResource(R.string.nav_friends)) },
             selected = currentTab == 3,
-            onClick = { navigateToActivity(context, AmigosActivity::class.java) }
+            onClick = { navigateToActivity(context, AmigosActivity::class.java) },
+            colors = navItemColors
         )
         NavigationBarItem(
             icon = { Icon(Icons.Default.Person, contentDescription = null) },
             label = { Text(stringResource(R.string.nav_profile)) },
             selected = currentTab == 4,
-            onClick = { navigateToActivity(context, PerfilActivity::class.java) }
+            onClick = { navigateToActivity(context, PerfilActivity::class.java) },
+            colors = navItemColors
         )
     }
 }

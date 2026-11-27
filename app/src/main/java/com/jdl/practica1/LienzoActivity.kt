@@ -1,7 +1,15 @@
 package com.jdl.practica1
 
+import android.graphics.Bitmap
+import android.graphics.Canvas as AndroidCanvas
+import android.graphics.Paint
+import android.graphics.Color as AndroidColor
+import android.content.Context
 import android.content.Intent
 import android.os.Bundle
+import java.io.File
+import java.io.FileOutputStream
+import java.util.UUID
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -22,13 +30,17 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import com.jdl.practica1.data.GarabatoDbHelper
 import com.jdl.practica1.ui.theme.AppTheme
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 data class LineData(
     val start: Offset,
@@ -44,6 +56,8 @@ class LienzoActivity : ComponentActivity() {
 
         val dbHelper = GarabatoDbHelper.getInstance(applicationContext)
         val initialTitle = intent.getStringExtra("RETO_TITULO") ?: ""
+        val prefs = getSharedPreferences("garabato_user_prefs", Context.MODE_PRIVATE)
+        val currentUserId = prefs.getLong("user_id", 1L)
 
         setContent {
             AppTheme {
@@ -51,38 +65,44 @@ class LienzoActivity : ComponentActivity() {
                 LienzoScreen(
                     initialTitle = initialTitle,
                     onClose = { finish() },
-                    onPublish = { drawingTitle ->
-                        // Obtener idUsuario activo desde SharedPreferences con respaldo en garabato.db
-                        val prefs = getSharedPreferences("garabato_user_prefs", MODE_PRIVATE)
-                        var activeUserId = prefs.getLong("user_id", 1L)
-                        if (activeUserId <= 0L) {
-                            val usuarios = dbHelper.obtenerUsuarios()
-                            if (usuarios.isNotEmpty()) {
-                                activeUserId = usuarios.last().idUsuario
-                            } else {
-                                val values = android.content.ContentValues().apply {
-                                    put("nombre", "Nadis")
-                                    put("correo", "nadis@garabato.com")
+                    onPublish = { drawingTitle, drawingLines, drawingSize ->
+                        coroutineScope.launch {
+                            withContext(Dispatchers.IO) {
+                                val bitmap = renderDrawingBitmap(drawingLines, drawingSize)
+                                val imageFile = File(filesDir, "dibujo_${UUID.randomUUID()}.png")
+                                var inserted = false
+                                try {
+                                    val compressed = FileOutputStream(imageFile).use {
+                                        bitmap.compress(Bitmap.CompressFormat.PNG, 100, it)
+                                    }
+                                    if (!compressed) {
+                                        throw IllegalStateException("No se pudo guardar la imagen del dibujo.")
+                                    }
+                                    val db = dbHelper.writableDatabase
+                                    val values = android.content.ContentValues().apply {
+                                        put("titulo", if (drawingTitle.isBlank()) "Lienzo sin título" else drawingTitle)
+                                        put("fechaCreacion", System.currentTimeMillis())
+                                        put("idUsuarioFK", currentUserId)
+                                        put("rutaImagen", imageFile.absolutePath)
+                                    }
+                                    val insertedId = db.insert("dibujo", null, values)
+                                    if (insertedId == -1L) {
+                                        throw IllegalStateException("No se pudo publicar el dibujo en la base de datos.")
+                                    }
+                                    inserted = true
+                                } finally {
+                                    bitmap.recycle()
+                                    if (!inserted) {
+                                        imageFile.delete()
+                                    }
                                 }
-                                activeUserId = dbHelper.writableDatabase.insert("usuario", null, values)
                             }
-                        }
-
-                        coroutineScope.launch(Dispatchers.IO) {
-                            val db = dbHelper.writableDatabase
-                            val values = android.content.ContentValues().apply {
-                                put("titulo", if (drawingTitle.isBlank()) "Lienzo sin título" else drawingTitle)
-                                put("fechaCreacion", System.currentTimeMillis())
-                                put("idUsuarioFK", activeUserId)
+                            val intent = Intent(this@LienzoActivity, PerfilActivity::class.java).apply {
+                                flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
                             }
-                            db.insert("dibujo", null, values)
+                            startActivity(intent)
+                            finish()
                         }
-
-                        val intent = Intent(this, PerfilActivity::class.java).apply {
-                            flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
-                        }
-                        startActivity(intent)
-                        finish()
                     }
                 )
             }
@@ -92,20 +112,41 @@ class LienzoActivity : ComponentActivity() {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun LienzoScreen(initialTitle: String, onClose: () -> Unit, onPublish: (String) -> Unit) {
+fun LienzoScreen(
+    initialTitle: String,
+    onClose: () -> Unit,
+    onPublish: (String, List<LineData>, IntSize) -> Unit
+) {
     var thickness by remember { mutableStateOf(8f) }
     val lines = remember { mutableStateListOf<LineData>() }
-    var selectedColor by remember { mutableStateOf(Color(0xFF6C4CF1)) }
+    var canvasSize by remember { mutableStateOf(IntSize.Zero) }
+    
+    val primaryColor = MaterialTheme.colorScheme.primary
+    val secondaryColor = MaterialTheme.colorScheme.secondary
+    val tertiaryColor = MaterialTheme.colorScheme.tertiary
+    val primaryContainerColor = MaterialTheme.colorScheme.primaryContainer
+    val secondaryContainerColor = MaterialTheme.colorScheme.secondaryContainer
+    val tertiaryContainerColor = MaterialTheme.colorScheme.tertiaryContainer
+
+    var selectedColor by remember(primaryColor) { mutableStateOf(primaryColor) }
     var drawingTitle by remember { mutableStateOf(initialTitle) }
 
+    // Paleta con colores de tema y variados
     val colors = listOf(
-        Color(0xFF6C4CF1),
-        Color(0xFF2EC4B6),
-        Color(0xFFFF6B6B),
-        Color(0xFFFFC93C),
-        Color(0xFF1F1B2E),
-        Color.Black,
-        Color.White
+        primaryColor,
+        secondaryColor,
+        tertiaryColor,
+        primaryContainerColor,
+        secondaryContainerColor,
+        tertiaryContainerColor,
+        Color(0xFFFF6B6B), // Rojo coral
+        Color(0xFFFF9F1C), // Naranja brillante
+        Color(0xFFFFC93C), // Amarillo sol
+        Color(0xFF52B788), // Verde claro
+        Color(0xFF4EA8DE), // Azul cielo
+        Color(0xFFFF70A6), // Rosa pastel
+        Color.Black,       // Negro
+        Color.White        // Blanco
     )
 
     Scaffold(
@@ -136,7 +177,9 @@ fun LienzoScreen(initialTitle: String, onClose: () -> Unit, onPublish: (String) 
                         )
                     }
                     Button(
-                        onClick = { onPublish(drawingTitle) },
+                        onClick = {
+                            onPublish(drawingTitle, lines.toList(), canvasSize)
+                        },
                         colors = ButtonDefaults.buttonColors(
                             containerColor = MaterialTheme.colorScheme.primary,
                             contentColor = MaterialTheme.colorScheme.onPrimary
@@ -171,6 +214,7 @@ fun LienzoScreen(initialTitle: String, onClose: () -> Unit, onPublish: (String) 
                 Canvas(
                     modifier = Modifier
                         .fillMaxSize()
+                        .onSizeChanged { canvasSize = it }
                         .pointerInput(selectedColor, thickness) {
                             detectDragGestures { change, dragAmount ->
                                 change.consume()
@@ -194,6 +238,7 @@ fun LienzoScreen(initialTitle: String, onClose: () -> Unit, onPublish: (String) 
                         )
                     }
                 }
+
             }
 
             Card(
@@ -208,24 +253,25 @@ fun LienzoScreen(initialTitle: String, onClose: () -> Unit, onPublish: (String) 
                         .padding(12.dp),
                     horizontalArrangement = Arrangement.SpaceAround
                 ) {
-                    IconButton(onClick = { selectedColor = Color(0xFF6C4CF1) }) {
-                        Icon(Icons.Default.Edit, contentDescription = stringResource(R.string.cd_tool_pencil))
+                    IconButton(onClick = { selectedColor = primaryColor }) {
+                        Icon(Icons.Default.Edit, contentDescription = stringResource(R.string.cd_tool_pencil), tint = MaterialTheme.colorScheme.primary)
                     }
-                    IconButton(onClick = { selectedColor = Color(0xFF2EC4B6) }) {
-                        Icon(Icons.Default.Menu, contentDescription = stringResource(R.string.cd_tool_brush))
+                    IconButton(onClick = { selectedColor = secondaryColor }) {
+                        Icon(Icons.Default.Create, contentDescription = stringResource(R.string.cd_tool_brush), tint = MaterialTheme.colorScheme.secondary)
                     }
                     IconButton(onClick = { selectedColor = Color.White }) {
                         Icon(Icons.Default.Clear, contentDescription = stringResource(R.string.cd_tool_eraser))
                     }
-                    IconButton(onClick = {}) {
-                        Icon(Icons.Default.Share, contentDescription = stringResource(R.string.cd_tool_bucket))
+                    IconButton(onClick = { selectedColor = tertiaryColor }) {
+                        Icon(Icons.Default.Share, contentDescription = stringResource(R.string.cd_tool_bucket), tint = MaterialTheme.colorScheme.tertiary)
                     }
-                    IconButton(onClick = {}) {
-                        Icon(Icons.Default.Star, contentDescription = stringResource(R.string.cd_tool_shapes))
+                    IconButton(onClick = { selectedColor = primaryContainerColor }) {
+                        Icon(Icons.Default.Star, contentDescription = stringResource(R.string.cd_tool_shapes), tint = MaterialTheme.colorScheme.primary)
                     }
                 }
             }
 
+            // Fila deslizable ampliada con más de 12 colores e indicador de selección visual
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -242,12 +288,10 @@ fun LienzoScreen(initialTitle: String, onClose: () -> Unit, onPublish: (String) 
                             .clip(CircleShape)
                             .border(
                                 width = if (isSelected) 3.dp else 1.dp,
-                                color = if (isSelected) MaterialTheme.colorScheme.primary else Color.Gray,
+                                color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline,
                                 shape = CircleShape
                             )
-                            .then(
-                                Modifier.clickable { selectedColor = color }
-                            )
+                            .clickable { selectedColor = color }
                     ) {}
                 }
             }
@@ -266,4 +310,24 @@ fun LienzoScreen(initialTitle: String, onClose: () -> Unit, onPublish: (String) 
             }
         }
     }
+}
+
+private fun renderDrawingBitmap(lines: List<LineData>, size: IntSize): Bitmap {
+    val bitmap = Bitmap.createBitmap(
+        size.width.coerceAtLeast(1),
+        size.height.coerceAtLeast(1),
+        Bitmap.Config.ARGB_8888
+    )
+    val canvas = AndroidCanvas(bitmap)
+    canvas.drawColor(AndroidColor.WHITE)
+    lines.forEach { line ->
+        val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+            color = line.color.toArgb()
+            strokeWidth = line.strokeWidth
+            strokeCap = Paint.Cap.ROUND
+            style = Paint.Style.STROKE
+        }
+        canvas.drawLine(line.start.x, line.start.y, line.end.x, line.end.y, paint)
+    }
+    return bitmap
 }

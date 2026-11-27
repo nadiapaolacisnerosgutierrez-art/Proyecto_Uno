@@ -1,5 +1,6 @@
-# Task List - Essential Flows & Privacy Policy
+# Task List - Persistent Friend Requests & Permanent Profile Picture
 
-- `[x]` Update `LienzoActivity.kt` to save drawing with active user ID from SharedPreferences / DB and redirect to `PerfilActivity`
-- `[x]` Update `PerfilActivity.kt` with `onResume()` to reload drawings and user profile from DB/SharedPreferences
+- `[x]` Update `GarabatoDbHelper.kt` with `amistad` table, version increment, and friendship/avatar methods
+- `[x]` Update `AmigosActivity.kt` with real requests section, accept/reject, send request, and friends list
+- `[x]` Update `PerfilActivity.kt` with permanent avatar persistence in `filesDir` and database
 - `[x]` Verify build with gradle build

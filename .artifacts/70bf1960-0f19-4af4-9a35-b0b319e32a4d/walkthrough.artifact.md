@@ -1,8 +1,13 @@
-# Walkthrough - Essential Flows & Privacy Policy
+# Walkthrough - Persistent Friend Requests & Permanent Profile Picture
 
-Successfully connected drawing publication with user session management and profile refresh:
-1. **LienzoActivity**: Retrieves the active `idUsuario` from `SharedPreferences` (with robust fallback to database query/creation), associates the new drawing precisely with that user ID when publishing, and redirects to `PerfilActivity`.
-2. **PerfilActivity**: Implemented `onResume()` and `onCreate()` to reload the active user's profile info and fetch their published drawings from `GarabatoDbHelper`, ensuring newly published drawings appear immediately in the "Dibujos" tab with updated counters.
+Successfully implemented persistent friendship requests in SQLite (`amistad` table) and permanent profile picture saving in `filesDir` and SQLite (`avatarUrl`), without modifying AndroidManifest.xml or build.gradle.kts.
+
+## Changes
+
+### [Database & Social Layer]
+- **[GarabatoDbHelper.kt](file:///C:/Users/nadia/AndroidStudioProjects/Practica1/app/src/main/java/com/jdl/practica1/data/GarabatoDbHelper.kt)**: Created `amistad` table (`idEmisor`, `idReceptor`, `estado`), updated database version to 3, and implemented robust helper methods (`enviarSolicitudAmistad`, `obtenerSolicitudesPendientes`, `aceptarSolicitud`, `rechazarSolicitud`, `obtenerAmigosAceptados`, `obtenerEstadoAmistad`).
+- **[AmigosActivity.kt](file:///C:/Users/nadia/AndroidStudioProjects/Practica1/app/src/main/java/com/jdl/practica1/AmigosActivity.kt)**: Connected real friend requests section with Accept and Reject buttons, dynamic "Enviar solicitud" / "Solicitud enviada" states, and mutual friends list.
+- **[PerfilActivity.kt](file:///C:/Users/nadia/AndroidStudioProjects/Practica1/app/src/main/java/com/jdl/practica1/PerfilActivity.kt)**: Profile avatar picker copies selected image permanently to `filesDir/avatar_usuario_${userId}.jpg` and saves the absolute path into `avatarUrl` in SQLite, ensuring it is permanently loaded and never lost.
 
 ## Verification Results
 

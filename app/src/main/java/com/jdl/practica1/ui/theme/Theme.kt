@@ -1,7 +1,6 @@
 package com.jdl.practica1.ui.theme
 
 import android.os.Build
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.material3.darkColorScheme
@@ -102,9 +101,9 @@ val unspecified_scheme = ColorFamily(
 
 @Composable
 fun AppTheme(
-    darkTheme: Boolean = isSystemInDarkTheme(),
-    // Dynamic color is available on Android 12+
-    dynamicColor: Boolean = true,
+    darkTheme: Boolean = false,
+    // Dynamic color is disabled by default to force our app's light/dark schemes
+    dynamicColor: Boolean = false,
     content: @Composable () -> Unit
 ) {
   val colorScheme = when {
